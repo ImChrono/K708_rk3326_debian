@@ -9,6 +9,7 @@ VERSION
 README.md
 HARDWARE-NOTES.md
 LICENSES.md
+docs/ADB-TO-DEBIAN.md
 .github/dependabot.yml
 .github/workflows/build.yml
 .github/workflows/build-private-image.yml
@@ -118,6 +119,12 @@ grep -q 'gh release create' \
 	"$kit_dir/.github/workflows/release.yml"
 grep -q 'sha256sum -c SHA256SUMS' \
 	"$kit_dir/.github/workflows/release.yml"
+grep -q 'rkdeveloptool rl 64 8128' \
+	"$kit_dir/docs/ADB-TO-DEBIAN.md"
+grep -q 'Non eseguire `dd of=/dev/block/' \
+	"$kit_dir/docs/ADB-TO-DEBIAN.md"
+grep -q 'docs/ADB-TO-DEBIAN.md' \
+	"$kit_dir/README.md"
 
 python3 -m json.tool \
 	"$kit_dir/hwtest/expected-hardware.json" >/dev/null

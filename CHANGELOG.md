@@ -2,6 +2,9 @@
 
 ## 0.4.0-rc5
 
+- Add an end-to-end Android/ADB acquisition guide covering repeatable raw
+  boot-chain extraction, DTB/kernel/firmware evidence, privacy boundaries and
+  recovery, UART, U-Boot UMS, Rockchip Loader and Maskrom fallback paths.
 - Add tag-driven GitHub Releases with strict `VERSION`/tag/changelog matching,
   automatic public kernel, DTB, modules, rootfs and source packages, combined
   SHA-256 checksums and prerelease detection.

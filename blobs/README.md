@@ -3,6 +3,9 @@
 The image builder needs the exact boot-chain sectors extracted from this
 tablet. They are deliberately not distributed in this source archive.
 
+For repeatable extraction from Android, recovery, UART or Rockchip
+Loader/Maskrom, follow the [Android/ADB acquisition guide](../docs/ADB-TO-DEBIAN.md).
+
 Prepare `blobs/private/` from the previously verified
 `ums-autoboot-source` directory:
 

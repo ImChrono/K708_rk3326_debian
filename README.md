@@ -78,6 +78,10 @@ the ignored `third_party/` directory.
 
 ## 2. Prepare the private boot chain
 
+For a complete acquisition procedure starting from a running Android tablet,
+including rootless/recovery/UART/Loader/Maskrom fallbacks, read the
+[Android/ADB acquisition guide](docs/ADB-TO-DEBIAN.md).
+
 Use the verified extraction already produced from this tablet:
 
 ```sh
