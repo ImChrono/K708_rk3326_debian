@@ -12,7 +12,7 @@ if [ -e "$destination" ]; then
 	exit 1
 fi
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 kit_dir=$(dirname "$script_dir")
 repository=$(sed -n '1p' "$kit_dir/configs/kernel-source.url")
 commit=$(sed -n '1p' "$kit_dir/configs/kernel-source.commit")

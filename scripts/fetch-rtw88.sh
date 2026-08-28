@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 kit_dir=$(dirname "$script_dir")
 destination=${1:-"$kit_dir/third_party/rtw88"}
 expected_commit=$(sed -n '1p' "$kit_dir/configs/rtw88-oot.commit")

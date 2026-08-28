@@ -7,7 +7,7 @@ if [ "$#" -ne 1 ]; then
 fi
 
 kernel_src=$1
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 kit_dir=$(dirname "$script_dir")
 dts_dir="$kernel_src/arch/arm64/boot/dts/rockchip"
 makefile="$dts_dir/Makefile"

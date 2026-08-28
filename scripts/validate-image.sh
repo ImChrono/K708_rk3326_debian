@@ -13,7 +13,7 @@ fi
 
 image=$1
 test -f "$image"
-image=$(CDPATH= cd -- "$(dirname -- "$image")" && pwd)/$(basename "$image")
+image=$(CDPATH='' cd -- "$(dirname -- "$image")" && pwd)/$(basename "$image")
 
 for command in \
 	dd e2fsck fdtget fsck.vfat losetup mount mountpoint \
@@ -25,7 +25,7 @@ do
 	}
 done
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 kit_dir=$(dirname "$script_dir")
 
 # shellcheck disable=SC1091
@@ -159,9 +159,9 @@ fi
 
 grep -qi "root=PARTUUID=$ROOT_PARTUUID" \
 	"$boot_mnt/extlinux/extlinux.conf"
-grep -qi "PARTUUID=$ROOT_PARTUUID[[:space:]]*/" \
+grep -qi "PARTUUID=${ROOT_PARTUUID}"'[[:space:]]*/' \
 	"$root_mnt/etc/fstab"
-grep -qi "PARTUUID=$BOOT_PARTUUID[[:space:]]*/boot" \
+grep -qi "PARTUUID=${BOOT_PARTUUID}"'[[:space:]]*/boot' \
 	"$root_mnt/etc/fstab"
 
 for profile in uart display charge-test; do
@@ -177,12 +177,15 @@ for profile in uart display charge-test; do
 	[ "$(
 		fdtget -t s "$dtb" /i2c@ff180000/pmic@20/battery status
 	)" = okay ]
+	# fdtget returns three whitespace-separated integer cells.
+	# shellcheck disable=SC2046
 	set -- $(
 		fdtget -t u "$dtb" \
 			/i2c@ff190000/ts@40 irq_gpio_number
 	)
 	[ "$2" = 17 ]
 	[ "$3" = 8 ]
+	# shellcheck disable=SC2046
 	set -- $(
 		fdtget -t u "$dtb" \
 			/i2c@ff190000/ts@40 rst_gpio_number

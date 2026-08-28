@@ -6,8 +6,8 @@ if [ "$#" -ne 1 ]; then
 	exit 2
 fi
 
-source_dir=$(CDPATH= cd -- "$1" && pwd)
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+source_dir=$(CDPATH='' cd -- "$1" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 kit_dir=$(dirname "$script_dir")
 private_dir="$kit_dir/blobs/private"
 
@@ -16,7 +16,7 @@ private_dir="$kit_dir/blobs/private"
 if [ ! -f "$source_dir/idb-area-lba64-8191.img" ] &&
 	[ -d "$source_dir/private" ]
 then
-	source_dir=$(CDPATH= cd -- "$source_dir/private" && pwd)
+	source_dir=$(CDPATH='' cd -- "$source_dir/private" && pwd)
 fi
 
 mkdir -p "$private_dir"

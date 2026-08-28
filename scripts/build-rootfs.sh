@@ -55,7 +55,7 @@ if [ -z "${DEBIAN_ARCHIVE_KEYRING:-}" ]; then
 	fi
 fi
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 kit_dir=$(dirname "$script_dir")
 work_dir=$(mktemp -d /tmp/rk3326-rootfs.XXXXXX)
 root_dir="$work_dir/root"

@@ -14,20 +14,20 @@ if [ "$(id -u)" -ne 0 ]; then
 	exit 1
 fi
 
-kernel_src=$(CDPATH= cd -- "$1" && pwd)
-kernel_out=$(CDPATH= cd -- "$2" && pwd)
+kernel_src=$(CDPATH='' cd -- "$1" && pwd)
+kernel_out=$(CDPATH='' cd -- "$2" && pwd)
 rootfs_tar=$3
 output=$4
 
 test -f "$rootfs_tar"
-rootfs_tar=$(CDPATH= cd -- "$(dirname -- "$rootfs_tar")" && pwd)/$(basename "$rootfs_tar")
+rootfs_tar=$(CDPATH='' cd -- "$(dirname -- "$rootfs_tar")" && pwd)/$(basename "$rootfs_tar")
 
 if [ -e "$output" ]; then
 	echo "error: output already exists: $output" >&2
 	exit 1
 fi
 
-output_dir=$(CDPATH= cd -- "$(dirname -- "$output")" && pwd)
+output_dir=$(CDPATH='' cd -- "$(dirname -- "$output")" && pwd)
 output="$output_dir/$(basename "$output")"
 
 for command in \
@@ -40,7 +40,7 @@ do
 	}
 done
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 kit_dir=$(dirname "$script_dir")
 
 # shellcheck disable=SC1091

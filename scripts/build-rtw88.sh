@@ -6,10 +6,10 @@ if [ "$#" -ne 3 ]; then
 	exit 2
 fi
 
-kernel_src=$(CDPATH= cd -- "$1" && pwd)
-kernel_out=$(CDPATH= cd -- "$2" && pwd)
-rtw88_src=$(CDPATH= cd -- "$3" && pwd)
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+kernel_src=$(CDPATH='' cd -- "$1" && pwd)
+kernel_out=$(CDPATH='' cd -- "$2" && pwd)
+rtw88_src=$(CDPATH='' cd -- "$3" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 kit_dir=$(dirname "$script_dir")
 expected_commit=$(sed -n '1p' "$kit_dir/configs/rtw88-oot.commit")
 actual_commit=$(git -C "$rtw88_src" rev-parse HEAD)

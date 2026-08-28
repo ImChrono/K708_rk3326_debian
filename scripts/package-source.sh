@@ -12,9 +12,9 @@ if [ -e "$output" ]; then
 	exit 1
 fi
 
-output_dir=$(CDPATH= cd -- "$(dirname -- "$output")" && pwd)
+output_dir=$(CDPATH='' cd -- "$(dirname -- "$output")" && pwd)
 output="$output_dir/$(basename "$output")"
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 kit_dir=$(dirname "$script_dir")
 kit_parent=$(dirname "$kit_dir")
 kit_name=$(basename "$kit_dir")

@@ -6,10 +6,10 @@ if [ "$#" -ne 2 ]; then
 	exit 2
 fi
 
-kernel_src=$(CDPATH= cd -- "$1" && pwd)
+kernel_src=$(CDPATH='' cd -- "$1" && pwd)
 mkdir -p "$2"
-output_dir=$(CDPATH= cd -- "$2" && pwd)
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+output_dir=$(CDPATH='' cd -- "$2" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 kit_dir=$(dirname "$script_dir")
 jobs=${JOBS:-$(getconf _NPROCESSORS_ONLN)}
 cross_compile=${CROSS_COMPILE:-aarch64-linux-gnu-}
