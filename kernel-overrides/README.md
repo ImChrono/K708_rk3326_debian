@@ -18,3 +18,7 @@ tablet's original GPL-licensed Android 4.19.193 kernel:
 selects it in `gsl3673_800x1280.c`. `scripts/build-kernel.sh` invokes the
 installer automatically. The firmware header remains separate from the
 upstream kernel checkout so its provenance and review boundary are clear.
+
+The same installer disables the upstream driver's active
+`GSL9XX_VDDIO_1800` definition. This reproduces the electrical mode used by
+the verified tablet build and is checked by an idempotence unit test.

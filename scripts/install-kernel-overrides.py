@@ -20,6 +20,10 @@ REPLACED_HEADERS = {
     "gsl3673_800x1280.h",
     "rochkchip_gslX680_8inch_800x1280_tg806_10.h",
 }
+VDDIO_DEFINE = "#define GSL9XX_VDDIO_1800"
+VDDIO_DISABLED_MARKER = (
+    "/* RK3326 BSP: GSL9XX_VDDIO_1800 intentionally disabled. */"
+)
 
 
 def file_sha256(path: pathlib.Path) -> str:
@@ -33,20 +37,26 @@ def file_sha256(path: pathlib.Path) -> str:
 def patch_driver(driver_path: pathlib.Path) -> None:
     original = driver_path.read_text(encoding="utf-8")
 
-    if any(
-        line.lstrip().startswith("#define GSL9XX_VDDIO_1800")
-        for line in original.splitlines()
-    ):
-        raise SystemExit(
-            "error: GSL9XX_VDDIO_1800 is active in the touchscreen driver"
-        )
-
     output: list[str] = []
     replacements = 0
     already_selected = False
+    vddio_replacements = 0
+    vddio_already_disabled = False
 
     for line in original.splitlines(keepends=True):
         stripped = line.lstrip()
+        if VDDIO_DISABLED_MARKER in stripped:
+            vddio_already_disabled = True
+            output.append(line)
+            continue
+
+        if stripped.rstrip("\r\n") == VDDIO_DEFINE:
+            indentation = line[: len(line) - len(stripped)]
+            newline = "\n" if line.endswith("\n") else ""
+            output.append(f"{indentation}{VDDIO_DISABLED_MARKER}{newline}")
+            vddio_replacements += 1
+            continue
+
         if stripped.startswith('#include "') and f'"{HEADER_NAME}"' in stripped:
             already_selected = True
             output.append(line)
@@ -66,6 +76,10 @@ def patch_driver(driver_path: pathlib.Path) -> None:
     if not already_selected and replacements != 1:
         raise SystemExit(
             "error: expected exactly one active stock GSL3673 firmware include"
+        )
+    if not vddio_already_disabled and vddio_replacements != 1:
+        raise SystemExit(
+            "error: expected exactly one active GSL9XX_VDDIO_1800 definition"
         )
 
     patched = "".join(output)

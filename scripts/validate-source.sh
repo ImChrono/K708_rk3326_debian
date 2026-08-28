@@ -32,6 +32,7 @@ hwtest/rk3326-hwprobe.py
 hwtest/rk3326-hwtest.py
 hwtest/rk3326-charge-watch.py
 tests/test_charge_watch.py
+tests/test_install_kernel_overrides.py
 kernel-overrides/README.md
 kernel-overrides/gsl3673_800x1280_oem.h
 rootfs/fstab.in

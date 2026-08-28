@@ -9,6 +9,10 @@
   it reusable by the release workflow.
 - Update the official checkout and artifact actions used by hosted CI while
   retaining the guarded self-hosted path for private bootable images.
+- Build a dedicated Debian 13 archive keyring from the official signing keys,
+  verifying all three fingerprints before the rootfs build starts.
+- Make the touchscreen override reproduce the verified VDDIO mode by
+  deterministically disabling the pinned Rockchip driver's active 1.8 V path.
 
 ## 0.4.0-rc4
 
