@@ -1,0 +1,63 @@
+# Boot and device management
+systemd-sysv
+udev
+kmod
+linux-base
+initramfs-tools
+
+# Console and administration
+bash
+sudo
+ca-certificates
+debian-archive-keyring
+locales
+console-setup
+keyboard-configuration
+less
+nano
+file
+procps
+psmisc
+strace
+curl
+
+# Storage and hardware diagnostics
+dosfstools
+e2fsprogs
+util-linux
+util-linux-extra
+i2c-tools
+usbutils
+evtest
+libinput-tools
+python3
+python3-evdev
+memtester
+brightnessctl
+
+# DRM, Mesa and media diagnostics
+drm-info
+libdrm-tests
+kmscube
+mesa-utils
+alsa-utils
+v4l-utils
+
+# Networking and RTL8723CS prerequisites
+iproute2
+iputils-ping
+iw
+rfkill
+wpasupplicant
+wireless-regdb
+firmware-realtek
+network-manager
+systemd-timesyncd
+ethtool
+bluez
+
+# Compressed swap for the 2 GiB LPDDR3 target
+systemd-zram-generator
+
+# Remote access once a network interface is enabled
+openssh-server

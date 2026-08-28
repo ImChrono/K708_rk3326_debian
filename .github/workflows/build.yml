@@ -1,0 +1,182 @@
+name: Build public artifacts
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  SOURCE_DATE_EPOCH: "0"
+
+jobs:
+  kernel:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Check out BSP
+        uses: actions/checkout@v7
+
+      - name: Install kernel build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            bc bison build-essential device-tree-compiler flex \
+            gcc-aarch64-linux-gnu git kmod libelf-dev libssl-dev xz-utils
+
+      - name: Fetch pinned sources
+        run: |
+          ./scripts/fetch-kernel.sh "$RUNNER_TEMP/kernel"
+          ./scripts/fetch-rtw88.sh
+
+      - name: Build kernel and DTBs
+        run: |
+          ./scripts/build-kernel.sh \
+            "$RUNNER_TEMP/kernel" \
+            "$RUNNER_TEMP/kernel-out"
+
+      - name: Package kernel, DTBs and modules
+        run: |
+          version=$(tr -d '\n' < VERSION)
+          package_dir="$PWD/dist/kernel-package"
+          release_dir="$PWD/dist/release"
+          mkdir -p "$package_dir/boot" "$release_dir"
+
+          install -m 0644 \
+            "$RUNNER_TEMP/kernel-out/arch/arm64/boot/Image" \
+            "$package_dir/boot/Image-6.1-rockchip"
+          install -m 0644 \
+            "$RUNNER_TEMP/kernel-out/arch/arm64/boot/dts/rockchip/rk3326-863-tablet-uart.dtb" \
+            "$RUNNER_TEMP/kernel-out/arch/arm64/boot/dts/rockchip/rk3326-863-tablet-display.dtb" \
+            "$RUNNER_TEMP/kernel-out/arch/arm64/boot/dts/rockchip/rk3326-863-tablet-charge-test.dtb" \
+            "$package_dir/boot/"
+          install -m 0644 \
+            "$RUNNER_TEMP/kernel-out/.config" \
+            "$package_dir/boot/kernel.config"
+
+          make -C "$RUNNER_TEMP/kernel" \
+            O="$RUNNER_TEMP/kernel-out" \
+            ARCH=arm64 \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            INSTALL_MOD_PATH="$package_dir" \
+            INSTALL_MOD_STRIP=1 \
+            modules_install
+
+          release=$(
+            make -s -C "$RUNNER_TEMP/kernel" \
+              O="$RUNNER_TEMP/kernel-out" \
+              ARCH=arm64 \
+              CROSS_COMPILE=aarch64-linux-gnu- \
+              kernelrelease
+          )
+          mkdir -p "$package_dir/lib/modules/$release/extra/rtw88"
+          install -m 0644 \
+            third_party/rtw88/rtw_core.ko \
+            third_party/rtw88/rtw_sdio.ko \
+            third_party/rtw88/rtw_8723x.ko \
+            third_party/rtw88/rtw_8703b.ko \
+            third_party/rtw88/rtw_8723cs.ko \
+            "$package_dir/lib/modules/$release/extra/rtw88/"
+          depmod -b "$package_dir" "$release"
+
+          tar \
+            --sort=name \
+            --mtime="@$SOURCE_DATE_EPOCH" \
+            --clamp-mtime \
+            --numeric-owner \
+            --owner=0 \
+            --group=0 \
+            -cJf "$release_dir/rk3326-tablet-kernel-$version.tar.xz" \
+            -C "$package_dir" .
+
+      - name: Upload kernel artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: rk3326-kernel
+          path: dist/release/*.tar.xz
+          if-no-files-found: error
+          retention-days: 14
+
+  rootfs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Check out BSP
+        uses: actions/checkout@v7
+
+      - name: Install rootfs build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            binfmt-support debian-archive-keyring mmdebstrap \
+            qemu-user-static systemd-container xz-utils
+
+          keyring_version=$(
+            dpkg-query -W -f='${Version}' debian-archive-keyring 2>/dev/null ||
+            true
+          )
+          if ! dpkg --compare-versions "${keyring_version:-0}" ge 2025.1; then
+            echo 'deb https://deb.debian.org/debian trixie main' | \
+              sudo tee /etc/apt/sources.list.d/rk3326-debian-trixie.list
+            sudo apt-get update
+            sudo apt-get install --yes --no-install-recommends \
+              -t trixie debian-archive-keyring
+            sudo rm -f /etc/apt/sources.list.d/rk3326-debian-trixie.list
+          fi
+          dpkg-query -W -f='debian-archive-keyring ${Version}\n' \
+            debian-archive-keyring
+          sudo update-binfmts --enable qemu-aarch64 || true
+
+      - name: Build locked Debian bring-up rootfs
+        run: |
+          version=$(tr -d '\n' < VERSION)
+          mkdir -p dist/release
+          sudo --preserve-env=SOURCE_DATE_EPOCH \
+            ./scripts/build-rootfs.sh \
+            "$PWD/dist/release/rk3326-tablet-debian-rootfs-$version.tar.xz"
+          sudo chown -R "$USER:$USER" dist
+
+      - name: Upload rootfs artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: rk3326-rootfs
+          path: dist/release/*.tar.xz
+          if-no-files-found: error
+          retention-days: 14
+
+  source:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out BSP
+        uses: actions/checkout@v7
+
+      - name: Install source validators
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes shellcheck
+
+      - name: Validate and package source
+        run: |
+          version=$(tr -d '\n' < VERSION)
+          ./scripts/validate-source.sh
+          shellcheck scripts/*.sh
+          mkdir -p dist/release
+          ./scripts/package-source.sh \
+            "$PWD/dist/release/rk3326-tablet-debian-bsp-$version-source.tar.xz"
+
+      - name: Upload source artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: rk3326-source
+          path: dist/release/*.tar.xz
+          if-no-files-found: error
+          retention-days: 14

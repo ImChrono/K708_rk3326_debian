@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "board": "rk3326-863-tablet",
+  "checks": [
+    {
+      "id": "model",
+      "description": "Display bring-up DTB is active",
+      "kind": "file_contains",
+      "path": "/proc/device-tree/model",
+      "value": "Generic RK3326 863 tablet",
+      "required": true
+    },
+    {
+      "id": "display",
+      "description": "DSI panel is connected",
+      "kind": "glob_contains",
+      "path": "/sys/class/drm/card*-DSI-*/status",
+      "value": "connected",
+      "required": true
+    },
+    {
+      "id": "framebuffer",
+      "description": "Framebuffer is 1024x600",
+      "kind": "file_equals",
+      "path": "/sys/class/graphics/fb0/virtual_size",
+      "value": "1024,600",
+      "required": true
+    },
+    {
+      "id": "touchscreen",
+      "description": "GSL3673 touchscreen input is registered",
+      "kind": "glob_contains",
+      "path": "/sys/class/input/event*/device/name",
+      "value": "gsl3673",
+      "required": true
+    },
+    {
+      "id": "power-key",
+      "description": "RK817 power key is registered",
+      "kind": "glob_contains",
+      "path": "/sys/class/input/event*/device/name",
+      "value": "pwrkey",
+      "required": true
+    },
+    {
+      "id": "volume-keys",
+      "description": "ADC volume keys are registered",
+      "kind": "glob_contains",
+      "path": "/sys/class/input/event*/device/name",
+      "value": "adc-keys",
+      "required": true
+    },
+    {
+      "id": "wifi",
+      "description": "A wireless network interface exists",
+      "kind": "glob_exists",
+      "path": "/sys/class/net/wlan*",
+      "required": false
+    },
+    {
+      "id": "battery",
+      "description": "A battery power-supply device exists",
+      "kind": "glob_contains",
+      "path": "/sys/class/power_supply/*/type",
+      "value": "Battery",
+      "required": false
+    },
+    {
+      "id": "gpu",
+      "description": "Panfrost is bound to the Mali-G31 GPU",
+      "kind": "glob_contains",
+      "path": "/sys/bus/platform/drivers/panfrost/*/uevent",
+      "value": "DRIVER=panfrost",
+      "required": false
+    }
+  ]
+}

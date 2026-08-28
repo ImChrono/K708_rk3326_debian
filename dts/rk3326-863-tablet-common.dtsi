@@ -1,0 +1,342 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Conservative RK3326 tablet overrides.
+ *
+ * The stock Rockchip 863 DTS is used for the RK817 regulator topology and
+ * SoC integration. Devices that are not needed for first boot are disabled
+ * here and re-enabled only in a later, explicit stage.
+ */
+
+#include "rk3326-863-lp3-v10.dtsi"
+
+/ {
+	model = "Generic RK3326 863 tablet (bring-up)";
+	compatible = "generic,rk3326-863-tablet",
+		     "rockchip,rk3326-863-lp3-v10",
+		     "rockchip,rk3326";
+
+	aliases {
+		serial2 = &uart2;
+	};
+
+	charge-animation {
+		status = "disabled";
+	};
+
+	fiq-debugger {
+		status = "disabled";
+	};
+
+	rk817-sound {
+		status = "disabled";
+	};
+
+	wireless-bluetooth {
+		status = "disabled";
+	};
+
+	wireless-wlan {
+		/*
+		 * Values recovered from the running Android DTB.  The generic
+		 * rk3326-863 include incorrectly uses GPIO0_B2 plus a synthetic
+		 * GPIO3_B6 VBAT switch for this board.
+		 */
+		/delete-property/ WIFI,vbat_gpio;
+		wifi_chip_type = "rtl8723cs";
+		WIFI,host_wake_irq = <&gpio0 RK_PA0 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+	};
+
+	/*
+	 * These Android hand-off regions have a zero-sized placeholder until
+	 * a cooperating Android U-Boot patches them. The tablet boot chain does
+	 * not patch them for Linux, so remove them instead of asking Linux to
+	 * reserve address zero.
+	 */
+	reserved-memory {
+		/delete-node/ drm-logo@0;
+		/delete-node/ vendor-storage-rm@00000000;
+	};
+
+	/delete-node/ vendor-storage;
+};
+
+&chosen {
+	/delete-property/ bootargs;
+	stdout-path = "serial2:1500000n8";
+};
+
+&debug {
+	status = "disabled";
+};
+
+&firmware_android {
+	status = "disabled";
+};
+
+&ramoops {
+	status = "disabled";
+};
+
+&backlight {
+	default-brightness-level = <96>;
+	status = "disabled";
+};
+
+&display_subsystem {
+	/delete-property/ logo-memory-region;
+	status = "disabled";
+};
+
+&dsi {
+	status = "disabled";
+
+	panel@0 {
+		status = "disabled";
+	};
+};
+
+&dsi_in_vopb {
+	status = "disabled";
+};
+
+&route_dsi {
+	status = "disabled";
+};
+
+&vopb {
+	status = "disabled";
+};
+
+&vopb_mmu {
+	status = "disabled";
+};
+
+&pwm1 {
+	status = "disabled";
+};
+
+/*
+ * The working microSD boot appeared as mmcblk0. Keep the clock conservative
+ * for the first 6.1 boot and retain the real board's voltage rails.
+ */
+&sdmmc {
+	max-frequency = <100000000>;
+	bus-width = <4>;
+	cap-mmc-highspeed;
+	cap-sd-highspeed;
+	no-sdio;
+	no-mmc;
+	card-detect-delay = <800>;
+	ignore-pm-notify;
+	vqmmc-supply = <&vccio_sd>;
+	vmmc-supply = <&vcc_sd>;
+	status = "okay";
+};
+
+/* Deliberately inaccessible during bring-up. */
+&emmc {
+	status = "disabled";
+};
+
+&sdio {
+	bus-width = <4>;
+	cap-sd-highspeed;
+	ignore-pm-notify;
+	keep-power-in-suspend;
+	mmc-pwrseq = <&sdio_pwrseq>;
+	no-mmc;
+	no-sd;
+	non-removable;
+	sd-uhs-sdr104;
+	supports-sdio;
+	status = "okay";
+};
+
+&nandc0 {
+	status = "disabled";
+};
+
+/*
+ * UART2 M0 overlaps the microSD interface. M1 is the independently measured
+ * console route (test points V12/W6). PIO avoids a DMA variable at bring-up.
+ */
+&uart2 {
+	/delete-property/ dmas;
+	/delete-property/ dma-names;
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart2m1_xfer>;
+	status = "okay";
+};
+
+&uart1 {
+	status = "disabled";
+};
+
+&i2c1 {
+	ts@40 {
+		/*
+		 * The generic 863 include routes the GSL3673 interrupt to
+		 * GPIO0_A5. The tablet's extracted Android DTB uses GPIO0_C1
+		 * instead; GPIO0_B4 is the reset line in both descriptions.
+		 */
+		irq_gpio_number = <&gpio0 RK_PC1 IRQ_TYPE_LEVEL_LOW>;
+		rst_gpio_number = <&gpio0 RK_PB4 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+	};
+
+	sensor@19 {
+		status = "disabled";
+	};
+};
+
+&i2c2 {
+	status = "disabled";
+};
+
+&i2s1_2ch {
+	status = "disabled";
+};
+
+&rk817 {
+	/*
+	 * Bring-up: keep only the IRQ/default pin state. Do not switch the
+	 * physical RK817 SLPPIN to sleep, power-off or reset functions.
+	 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pmic_int>;
+	/delete-property/ pinctrl-1;
+	/delete-property/ pinctrl-2;
+	/delete-property/ pinctrl-3;
+
+	battery {
+		/*
+		 * Fuel-gauge calibration copied verbatim from the Android DTB
+		 * for this tablet's 2543 mAh cell.
+		 */
+		ocv_table = <3400 3668 3689 3714 3739 3757 3775
+			     3790 3805 3823 3844 3872 3919 3963
+			     3996 4052 4093 4143 4194 4249 4310>;
+		design_capacity = <2543>;
+		design_qmax = <2798>;
+		bat_res = <100>;
+		sleep_enter_current = <150>;
+		sleep_exit_current = <180>;
+		sleep_filter_current = <100>;
+		power_off_thresd = <3400>;
+		zero_algorithm_vol = <3300>;
+		max_soc_offset = <60>;
+		monitor_sec = <5>;
+		sample_res = <10>;
+		virtual_power = <0>;
+		low_power_sleep = <1>;
+		status = "okay";
+	};
+
+	/*
+	 * Keep charging disabled for the first gauge-only test.  Although the
+	 * OEM DT requests 4.4 V / 2 A, enabling that policy deserves a separate
+	 * thermal and current validation.
+	 */
+	charger {
+		status = "disabled";
+	};
+};
+
+&rk817_codec {
+	status = "disabled";
+};
+
+&gpu {
+	/*
+	 * The vendor DT names these interrupts "GPU", "MMU" and "JOB".
+	 * Panfrost follows the upstream binding and looks them up in lower
+	 * case. The IRQ numbers themselves are already correct.
+	 */
+	interrupt-names = "gpu", "mmu", "job";
+	mali-supply = <&vdd_logic>;
+	status = "okay";
+};
+
+&rk_rga {
+	status = "disabled";
+};
+
+&mpp_srv {
+	status = "disabled";
+};
+
+&vdpu {
+	status = "disabled";
+};
+
+&vepu {
+	status = "disabled";
+};
+
+&vpu_mmu {
+	status = "disabled";
+};
+
+&hevc {
+	status = "disabled";
+};
+
+&hevc_mmu {
+	status = "disabled";
+};
+
+&vip_mmu {
+	status = "disabled";
+};
+
+&cif {
+	status = "disabled";
+};
+
+&cif_sensor {
+	status = "disabled";
+};
+
+&rkisp1 {
+	status = "disabled";
+};
+
+&isp_mmu {
+	status = "disabled";
+};
+
+&rockchip_suspend {
+	status = "disabled";
+};
+
+/*
+ * IRQs copied from the tablet's Android DTB. The generic 863 include enables
+ * both PHY ports but does not provide these board-required interrupt
+ * properties, which makes the USB2 PHY probe report -ENXIO.
+ */
+&u2phy_host {
+	interrupts = <GIC_SPI 68 IRQ_TYPE_LEVEL_HIGH>;
+	interrupt-names = "linestate";
+};
+
+&u2phy_otg {
+	interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>,
+		     <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>,
+		     <GIC_SPI 64 IRQ_TYPE_LEVEL_HIGH>;
+	interrupt-names = "otg-bvalid", "otg-id", "linestate";
+};
+
+/*
+ * The boot firmware trains LPDDR3 at approximately 332/333 MHz.
+ * Its ATF does not accept the 328/666 MHz OPPs exposed by the
+ * Rockchip 6.1 DT. Keep DDR at the firmware-selected frequency
+ * until a board-specific DMC/FSP table has been validated.
+ */
+&dfi {
+	status = "disabled";
+};
+
+&dmc {
+	status = "disabled";
+};

@@ -1,0 +1,31 @@
+name: Validate source
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out BSP
+        uses: actions/checkout@v7
+
+      - name: Install validators
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes shellcheck
+
+      - name: Validate source tree
+        run: ./scripts/validate-source.sh
+
+      - name: Check shell scripts
+        run: shellcheck scripts/*.sh

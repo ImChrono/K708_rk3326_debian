@@ -1,0 +1,90 @@
+name: Build private bootable image
+
+on:
+  workflow_dispatch:
+    inputs:
+      boot_profile:
+        description: Default extlinux profile
+        required: true
+        default: display
+        type: choice
+        options:
+          - uart
+          - display
+          - charge-test
+      upload_image:
+        description: Upload the private-blob image as a GitHub artifact
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: private-image-${{ github.ref }}-${{ inputs.boot_profile }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  image:
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - rk3326-builder
+    environment: rk3326-private-build
+    timeout-minutes: 180
+    env:
+      SOURCE_DATE_EPOCH: "0"
+      PRIVATE_BLOB_SOURCE: /opt/rk3326-private/ums-autoboot-source
+      ROOT_PASSWORD_HASH: ${{ secrets.RK3326_ROOT_PASSWORD_HASH }}
+    steps:
+      - name: Check out BSP
+        uses: actions/checkout@v7
+
+      - name: Validate private inputs
+        run: |
+          test -d "$PRIVATE_BLOB_SOURCE"
+          ./scripts/prepare-blobs.sh "$PRIVATE_BLOB_SOURCE"
+          ./scripts/verify-blobs.sh
+
+      - name: Fetch and build pinned kernel and Wi-Fi driver
+        run: |
+          ./scripts/fetch-kernel.sh "$RUNNER_TEMP/kernel"
+          ./scripts/fetch-rtw88.sh
+          ./scripts/build-kernel.sh \
+            "$RUNNER_TEMP/kernel" \
+            "$RUNNER_TEMP/kernel-out"
+
+      - name: Build Debian rootfs
+        run: |
+          sudo --preserve-env=ROOT_PASSWORD_HASH,SOURCE_DATE_EPOCH \
+            ./scripts/build-rootfs.sh \
+            "$RUNNER_TEMP/debian-rk3326-rootfs.tar.xz"
+
+      - name: Build and validate image
+        env:
+          BOOT_PROFILE: ${{ inputs.boot_profile }}
+        run: |
+          mkdir -p dist
+          sudo --preserve-env=BOOT_PROFILE \
+            ./scripts/build-image.sh \
+            "$RUNNER_TEMP/kernel" \
+            "$RUNNER_TEMP/kernel-out" \
+            "$RUNNER_TEMP/debian-rk3326-rootfs.tar.xz" \
+            "$PWD/dist/rk3326-tablet-debian.img"
+          sudo ./scripts/validate-image.sh \
+            "$PWD/dist/rk3326-tablet-debian.img"
+          sudo chown -R "$USER:$USER" dist
+          xz -T0 -6 dist/rk3326-tablet-debian.img
+          sha256sum dist/rk3326-tablet-debian.img.xz \
+            > dist/rk3326-tablet-debian.img.xz.sha256
+
+      - name: Upload private image
+        if: ${{ inputs.upload_image }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rk3326-private-image-${{ inputs.boot_profile }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14

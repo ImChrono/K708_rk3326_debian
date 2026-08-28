@@ -1,0 +1,91 @@
+name: Publish release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag, VERSION and changelog
+        id: version
+        run: |
+          version=$(tr -d '\n' < VERSION)
+          test -n "$version"
+          test "$GITHUB_REF_NAME" = "v$version"
+          git tag --points-at HEAD --list "$GITHUB_REF_NAME" | grep -Fx "$GITHUB_REF_NAME"
+          grep -Fx "## $version" CHANGELOG.md
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: version
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build.yml
+
+  publish:
+    needs:
+      - version
+      - build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - name: Download release assets
+        uses: actions/download-artifact@v8
+        with:
+          pattern: rk3326-*
+          path: release
+          merge-multiple: true
+
+      - name: Verify release assets
+        run: |
+          test -f "release/rk3326-tablet-kernel-$VERSION.tar.xz"
+          test -f "release/rk3326-tablet-debian-rootfs-$VERSION.tar.xz"
+          test -f "release/rk3326-tablet-debian-bsp-$VERSION-source.tar.xz"
+          test "$(find release -maxdepth 1 -type f -name '*.tar.xz' | wc -l)" -eq 3
+          (
+            cd release
+            sha256sum ./*.tar.xz > SHA256SUMS
+            sha256sum -c SHA256SUMS
+          )
+
+      - name: Create or update GitHub Release
+        shell: bash
+        run: |
+          flags=()
+          case "$VERSION" in
+            *-*) flags+=(--prerelease) ;;
+            *) flags+=(--latest) ;;
+          esac
+
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" release/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              release/* \
+              --verify-tag \
+              --title "RK3326 tablet Debian BSP $VERSION" \
+              --generate-notes \
+              "${flags[@]}"
+          fi
