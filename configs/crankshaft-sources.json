@@ -1,0 +1,15 @@
+{
+  "purpose": "Audited source references; package provenance must be verified separately",
+  "crankshaft-core": {
+    "url": "https://github.com/opencardev/crankshaft-core.git",
+    "commit": "af2650f6bcfd0ca3608d12edb8b5cf9bd45f1ccf"
+  },
+  "crankshaft-ui-slim": {
+    "url": "https://github.com/opencardev/crankshaft-ui-slim.git",
+    "commit": "1fdf68e8d9f22e5faa979eead500426e3a9d51bc"
+  },
+  "aasdk": {
+    "url": "https://github.com/opencardev/aasdk.git",
+    "commit": "5483c6481742d35bd9ed5923eb74a3562eeab84b"
+  }
+}

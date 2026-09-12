@@ -288,3 +288,11 @@ Create a clean source-only archive with:
 
 Both packaging scripts exclude private boot-chain blobs, fetched third-party
 trees and all generated rootfs/image outputs.
+
+## Experimental Crankshaft profile
+
+An optional `ROOTFS_PROFILE=android-auto` integrates local, checksum-verified
+ARM64 Crankshaft packages into this BSP. It targets an initial USB video/touch
+bring-up using the existing `BOOT_PROFILE=display`. Hardware operation is not
+yet validated. See [Crankshaft on K708](docs/CRANKSHAFT-K708.md) for prerequisites,
+build instructions, upstream portability findings and the on-device test plan.

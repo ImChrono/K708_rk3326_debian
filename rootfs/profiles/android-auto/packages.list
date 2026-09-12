@@ -1,0 +1,18 @@
+# Generic DRM/KMS and Qt runtime, without Raspberry Pi OS packages.
+adduser
+libpam-systemd
+qt6-qpa-plugins
+libqt6opengl6
+libqt6sql6-sqlite
+qml6-module-qtqml-workerscript
+qml6-module-qtquick-templates
+gstreamer1.0-tools
+gstreamer1.0-plugins-base
+gstreamer1.0-plugins-good
+gstreamer1.0-plugins-bad
+gstreamer1.0-libav
+pipewire
+pipewire-alsa
+pipewire-pulse
+wireplumber
+pulseaudio-utils
