@@ -18,7 +18,8 @@ rm "$root_dir/usr/sbin/policy-rc.d"
 rm -rf "$root_dir/tmp/crankshaft-debs"
 # Upstream postinst ignores failed group additions: make hardware access explicit.
 for group in video render input audio plugdev aasdk; do
- chroot "$root_dir" /bin/sh -ec 'getent group "$1" >/dev/null || groupadd --system "$1"' sh "$group"
+ chroot "$root_dir" getent group "$group" >/dev/null ||
+  chroot "$root_dir" groupadd --system "$group"
 done
 chroot "$root_dir" usermod -a -G video,render,input,audio,plugdev,aasdk crankshaft
 cp -a "$kit_dir/rootfs/profiles/android-auto/overlay/." "$root_dir/"
