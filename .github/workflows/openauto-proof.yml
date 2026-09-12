@@ -1,0 +1,29 @@
+name: OpenAuto ARM64 proof
+on:
+  pull_request:
+    paths:
+      - 'openauto-proof/**'
+      - 'configs/openauto-proof.sources'
+      - 'scripts/build-openauto-proof.sh'
+      - '.github/workflows/openauto-proof.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: openauto-proof-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build on Debian 13 ARM64
+        run: ./scripts/build-openauto-proof.sh
+      - name: Upload proof bundle and provenance
+        uses: actions/upload-artifact@v7
+        with:
+          name: k708-openauto-arm64
+          path: build/openauto-proof/
+          if-no-files-found: error
+          retention-days: 14
