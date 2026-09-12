@@ -1,0 +1,3 @@
+# Matching-era source pair; compatibility is established by the build, then hardware tests.
+OPENAUTO_COMMIT=4cc739b813622739b09352655581072fc4d39280
+AASDK_COMMIT=0c94ec128b5d84b19765e91a7b395f96cf9b9749

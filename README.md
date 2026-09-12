@@ -288,3 +288,8 @@ Create a clean source-only archive with:
 
 Both packaging scripts exclude private boot-chain blobs, fetched third-party
 trees and all generated rootfs/image outputs.
+
+## OpenAuto proof build
+
+See [OpenAuto on K708](docs/OPENAUTO-PROOF.md) for a standalone Debian 13 ARM64
+proof build with `NOPI=ON`. It produces a manual-run bundle, not a flashable image.
