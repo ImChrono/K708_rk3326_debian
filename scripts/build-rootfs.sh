@@ -57,6 +57,14 @@ fi
 
 script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 kit_dir=$(dirname "$script_dir")
+profile=${ROOTFS_PROFILE:-diagnostic}
+case "$profile" in
+ diagnostic) ;;
+ android-auto)
+  [ "${DEBIAN_SUITE:-trixie}" = trixie ] || { echo "error: android-auto requires trixie" >&2; exit 1; }
+  python3 "$kit_dir/scripts/check-crankshaft-packages.py" "${CRANKSHAFT_DEB_DIR:?set CRANKSHAFT_DEB_DIR}" ;;
+ *) echo "error: unknown ROOTFS_PROFILE: $profile" >&2; exit 1 ;;
+esac
 work_dir=$(mktemp -d /tmp/rk3326-rootfs.XXXXXX)
 root_dir="$work_dir/root"
 
@@ -74,6 +82,12 @@ packages=$(
 	paste -sd, -
 )
 
+if [ "$profile" = android-auto ]; then
+ extra_packages=$(sed -e 's/[[:space:]]*#.*$//' -e '/^[[:space:]]*$/d' \
+  "$kit_dir/rootfs/profiles/android-auto/packages.list" | paste -sd, -)
+ packages="$packages,$extra_packages"
+fi
+
 suite=${DEBIAN_SUITE:-trixie}
 mirror=${DEBIAN_MIRROR:-http://deb.debian.org/debian}
 
@@ -89,6 +103,7 @@ mmdebstrap \
 	"$mirror"
 
 cp -a "$kit_dir/rootfs/overlay/." "$root_dir/"
+printf '%s\n' "$profile" > "$root_dir/etc/rk3326-rootfs-profile"
 
 install -D -m 0755 \
 	"$kit_dir/hwtest/rk3326-hwprobe.py" \
@@ -118,6 +133,10 @@ systemctl --root="$root_dir" enable \
 	systemd-timesyncd.service \
 	rk3326-hwprobe.service \
 	rk3326-hwtest.service
+
+if [ "$profile" = android-auto ]; then
+ "$script_dir/install-crankshaft-profile.sh" "$root_dir" "$CRANKSHAFT_DEB_DIR"
+fi
 
 chroot "$root_dir" apt-get clean
 : > "$root_dir/etc/machine-id"

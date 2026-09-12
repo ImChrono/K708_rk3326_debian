@@ -256,7 +256,18 @@ do
 	test -e "$root_mnt/$path"
 done
 
-for unit in rk3326-hwprobe.service rk3326-hwtest.service; do
+profile=diagnostic
+if [ -f "$root_mnt/etc/rk3326-rootfs-profile" ]; then
+ profile=$(cat "$root_mnt/etc/rk3326-rootfs-profile")
+fi
+case "$profile" in
+ diagnostic) diagnostic_units="rk3326-hwprobe.service rk3326-hwtest.service" ;;
+ android-auto)
+  diagnostic_units=rk3326-hwprobe.service
+  python3 "$script_dir/validate-crankshaft-rootfs.py" "$root_mnt" ;;
+ *) echo "error: unknown rootfs profile: $profile" >&2; exit 1 ;;
+esac
+for unit in $diagnostic_units; do
 	link="$root_mnt/etc/systemd/system/multi-user.target.wants/$unit"
 	test -L "$link" || {
 		echo "error: $unit is not enabled in the image" >&2

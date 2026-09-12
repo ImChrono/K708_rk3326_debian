@@ -5,6 +5,15 @@ script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 kit_dir=$(dirname "$script_dir")
 
 required_files="
+configs/crankshaft-sources.json
+docs/CRANKSHAFT-K708.md
+scripts/check-crankshaft-packages.py
+scripts/validate-crankshaft-rootfs.py
+scripts/configure-crankshaft.py
+scripts/install-crankshaft-profile.sh
+rootfs/profiles/android-auto/packages.list
+rootfs/profiles/android-auto/overlay/etc/systemd/system/crankshaft-ui-slim.service.d/k708.conf
+
 VERSION
 README.md
 HARDWARE-NOTES.md
